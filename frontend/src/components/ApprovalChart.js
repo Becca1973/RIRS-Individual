@@ -69,6 +69,15 @@ const ApprovalChart = () => {
         <Typography color="error">{error}</Typography>
       ) : chartData ? (
         <Box sx={{ height: "400px" }}>
+          {/* Render the names and approvals for testing */}
+          <Box sx={{ marginBottom: "1rem" }}>
+            {chartData.labels.map((name, index) => (
+              <Typography
+                key={index}
+              >{`${name}: ${chartData.datasets[0].data[index]} dni dopusta`}</Typography>
+            ))}
+          </Box>
+
           <Bar
             data={chartData}
             options={{

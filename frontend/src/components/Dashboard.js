@@ -87,8 +87,11 @@ const Dashboard = () => {
 
       <Stack direction="row" spacing={2} sx={{ mb: 3 }} alignItems="center">
         <FormControl fullWidth variant="outlined" size="small">
-          <InputLabel>Filter by Leave Type</InputLabel>
+          <InputLabel htmlFor="leave-type-select">
+            Filter by Leave Type
+          </InputLabel>
           <Select
+            id="leave-type-select"
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
             label="Filter by Leave Type"
