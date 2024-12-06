@@ -15,7 +15,6 @@ import {
 const Header = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const location = useLocation();
   const [reRender, setReRender] = useState(true);
@@ -27,7 +26,6 @@ const Header = () => {
         setUser(loggedInUser);
       } catch (err) {
         console.error("Error fetching user data:", err);
-        setError(err);
       } finally {
         setLoading(false);
       }
