@@ -30,7 +30,7 @@ const Dashboard = () => {
     const fetchUserRequests = async () => {
       try {
         const data = await getUserRequests();
-        console.log("Fetched user requests:", data); // Preverite podatke tukaj
+        console.log("Fetched user requests:", data);
         setRequests(data);
       } catch (error) {
         console.error("Error fetching user requests:", error);

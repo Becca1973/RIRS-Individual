@@ -46,8 +46,6 @@ export const fetchLoggedInUser = async () => {
 
   try {
     const decodedToken = jwtDecode(token);
-
-    // Check token expiry (if it has an 'exp' property)
     const currentTime = Date.now() / 1000;
     if (decodedToken.exp && decodedToken.exp < currentTime) {
       localStorage.removeItem("token");
