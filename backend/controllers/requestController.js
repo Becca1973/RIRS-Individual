@@ -109,3 +109,25 @@ exports.getLeaveStatsByUser = (req, res) => {
     res.status(200).json(results);
   });
 };
+
+exports.deleteLeave = (req, res) => {
+  const leaveId = req.params.leaveId;
+  console.log("Leave ID to delete:", leaveId);
+
+  if (!leaveId) {
+    return res.status(400).json({ message: "Leave ID is required" });
+  }
+
+  Request.deleteLeave(leaveId, (err, result) => {
+    if (err) {
+      console.error("Error in SQL query:", err);
+      return res.status(500).json({ message: "Failed to delete leave" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Leave not found" });
+    }
+
+    res.status(200).json({ message: "Leave deleted successfully" });
+  });
+};

@@ -91,6 +91,7 @@ GROUP BY
         z.komentar,
         JSON_ARRAYAGG(
             JSON_OBJECT(
+                'id', d.id,
                 'zacetek', d.zacetek,
                 'konec', d.konec,
                 'razlog', d.razlog,
@@ -110,6 +111,7 @@ GROUP BY
     `;
     db.query(query, [userId], callback);
   },
+
   getLeaveStatsByUser: (callback) => {
     const query = `
       SELECT 
@@ -129,6 +131,16 @@ GROUP BY
         u.id;
     `;
     db.query(query, callback);
+  },
+  deleteLeave: (leaveId, callback) => {
+    const query = `DELETE FROM dopust WHERE id = ?`;
+    db.query(query, [leaveId], (err, result) => {
+      if (err) {
+        console.error("Error in SQL query:", err);
+        return callback(err, null);
+      }
+      callback(null, result);
+    });
   },
 };
 

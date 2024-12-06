@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getUserRequests } from "../api/requestApi";
+import { deleteLeave } from "../api/requestApi";
 import {
   Container,
   Typography,
@@ -29,6 +30,7 @@ const Dashboard = () => {
     const fetchUserRequests = async () => {
       try {
         const data = await getUserRequests();
+        console.log("Fetched user requests:", data); // Preverite podatke tukaj
         setRequests(data);
       } catch (error) {
         console.error("Error fetching user requests:", error);
@@ -59,6 +61,31 @@ const Dashboard = () => {
         <CircularProgress />
       </Box>
     );
+
+  const handleDelete = async (leaveId) => {
+    if (!leaveId) {
+      console.error("No leave ID provided!");
+      return;
+    }
+
+    if (window.confirm("Are you sure you want to delete this leave?")) {
+      try {
+        console.log("Deleting leave with ID:", leaveId);
+
+        await deleteLeave(leaveId);
+
+        setRequests((prevRequests) =>
+          prevRequests.map((request) => ({
+            ...request,
+            dopusti: request.dopusti.filter((leave) => leave.id !== leaveId),
+          }))
+        );
+      } catch (error) {
+        console.error("Error deleting leave:", error);
+        alert("Failed to delete the leave. Please try again.");
+      }
+    }
+  };
 
   return (
     <Container
@@ -121,6 +148,9 @@ const Dashboard = () => {
               <TableCell>
                 <strong>End Date</strong>
               </TableCell>
+              <TableCell>
+                <strong>Action</strong>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -142,6 +172,16 @@ const Dashboard = () => {
                     </TableCell>
                     <TableCell>
                       {new Date(leave.konec).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => handleDelete(leave.id)}
+                      >
+                        Delete
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

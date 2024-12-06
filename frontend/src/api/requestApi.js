@@ -73,3 +73,12 @@ export const getUserRequestStatuses = async () => {
     return [];
   }
 };
+export const deleteLeave = async (leaveId) => {
+  try {
+    const response = await axios.delete(`${API_URL}/leave/${leaveId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting leave:", error);
+    throw error;
+  }
+};

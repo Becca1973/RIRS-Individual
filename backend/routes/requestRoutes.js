@@ -8,4 +8,5 @@ router.put("/", requestController.updateRequestStatus);
 router.get("/all-leaves", requestController.getAllLeaves);
 router.get("/user-requests", verifyToken, requestController.getRequestsByUser);
 router.get("/user-request-statuses", requestController.getLeaveStatsByUser);
+router.delete("/leave/:leaveId", requestController.deleteLeave);
 module.exports = router;
