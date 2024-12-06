@@ -10,9 +10,9 @@ describe("Uporabniški API-ji", () => {
       .post("/api/users")
       .send({
         user: {
-          ime: "Jana",
+          ime: "Jannez",
           priimek: "Novak",
-          email: "jana.novak@example.com",
+          email: "jannez.novak@example.com",
           geslo: "securepassword",
           confirmGeslo: "securepassword",
         },

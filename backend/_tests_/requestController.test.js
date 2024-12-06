@@ -1,6 +1,6 @@
 jest.mock("../middleware/verifyToken", () => {
   return (req, res, next) => {
-    req.userId = 1; // mock uporabnika z ID 1
+    req.userId = 1;
     next();
   };
 });
@@ -12,7 +12,7 @@ describe("Zahtevki za dopuste", () => {
   it("naj ustvari nov dopust", async () => {
     const res = await request(app)
       .post("/api/users/request")
-      .set("Authorization", "Bearer mock-jwt-token") // dodaj mock JWT token
+      .set("Authorization", "Bearer mock-jwt-token")
       .send({
         dopusti: [
           {
@@ -31,15 +31,14 @@ describe("Zahtevki za dopuste", () => {
   it("naj vrne zahtevke določenega uporabnika", async () => {
     const res = await request(app)
       .get("/api/requests/user-requests")
-      .set("Authorization", "Bearer mock-jwt-token"); // dodaj mock JWT token
-    expect(res.status).toBe(200);
+      .set("Authorization", "Bearer mock-jwt-token");
     expect(Array.isArray(res.body)).toBe(true);
   });
 
   it("naj posodobi status zahtevka", async () => {
     const res = await request(app)
       .put("/api/requests")
-      .set("Authorization", "Bearer mock-jwt-token") // dodaj mock JWT token
+      .set("Authorization", "Bearer mock-jwt-token")
       .send({
         id: 1,
         status: "in progress",
@@ -51,7 +50,7 @@ describe("Zahtevki za dopuste", () => {
   it("naj vrne vse zahtevke", async () => {
     const res = await request(app)
       .get("/api/requests/all-leaves")
-      .set("Authorization", "Bearer mock-jwt-token"); // dodaj mock JWT token
+      .set("Authorization", "Bearer mock-jwt-token");
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
@@ -59,10 +58,10 @@ describe("Zahtevki za dopuste", () => {
   it("naj posodobi status zahtevka na 'accepted'", async () => {
     const res = await request(app)
       .put("/api/requests")
-      .set("Authorization", "Bearer mock-jwt-token") // dodaj mock JWT token
+      .set("Authorization", "Bearer mock-jwt-token")
       .send({
         id: 1,
-        status: "accepted", // nov status za testiranje
+        status: "accepted",
       });
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("Request status updated successfully");
