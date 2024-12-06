@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">47.76% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>33/66</span>
+                <span class='fraction'>32/67</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">37.5% </span>
+                <span class="strong">41.66% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>9/24</span>
+                <span class='fraction'>10/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">55.55% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>8/12</span>
+                <span class='fraction'>5/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">51.56% </span>
+                <span class="strong">47.76% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>33/64</span>
+                <span class='fraction'>32/67</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -196,7 +196,11 @@
 <a name='L131'></a><a href='#L131'>131</a>
 <a name='L132'></a><a href='#L132'>132</a>
 <a name='L133'></a><a href='#L133'>133</a>
-<a name='L134'></a><a href='#L134'>134</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -207,11 +211,9 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -219,9 +221,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -232,9 +231,18 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -336,39 +344,43 @@ const jwt = require("jsonwebtoken");
 exports.registerUser = async (req, res) =&gt; {
   const { user } = req.body;
   try {
-    User.findByEmail(user.email, (err, results) =&gt; {
-      if (results.length &gt; 0) {
-        return res.status(400).json({ message: "User already exists" });
-      }
-      bcrypt.hash(user.geslo, 10, (err, hashedPassword) =&gt; {
-        <span class="missing-if-branch" title="if path not taken" >I</span>if (err) <span class="cstat-no" title="statement not covered" >throw err;</span>
+    const existingUser = await User.findOne({ email: user.email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 &nbsp;
-        const newUser = {
-          ime: user.ime,
-          priimek: user.priimek,
-          email: user.email,
-          geslo: hashedPassword,
-          tip_uporabnika_id: 1,
-        };
-&nbsp;
-        User.create(newUser, (err, result) =&gt; {
-          <span class="missing-if-branch" title="if path not taken" >I</span>if (err) <span class="cstat-no" title="statement not covered" >throw err;</span>
-          res.status(201).json({ message: "User registered successfully" });
-        });
-      });
+    const hashedPassword = await bcrypt.hash(user.geslo, 10);
+    const newUser = await User.create({
+      ime: user.ime,
+      priimek: user.priimek,
+      email: user.email,
+      geslo: hashedPassword,
     });
+&nbsp;
+    res
+      .status(201)
+      .json({ message: "User registered successfully", user: newUser });
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    res.status(500).json({ message: "Server error" });</span>
   }
 };
 &nbsp;
-exports.getAllUsers = (req, res) =&gt; {
-  User.getAll((err, results) =&gt; {
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (err) {
-<span class="cstat-no" title="statement not covered" >      return res.status(500).json({ message: "Failed to retrieve users" });</span>
-    }
-    res.status(200).json(results);
-  });
+exports.getAllUsers = async (req, res) =&gt; {
+  try {
+    User.getAll((err, results) =&gt; {
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (err) {
+<span class="cstat-no" title="statement not covered" >        console.error("Error fetching users:", err);</span>
+<span class="cstat-no" title="statement not covered" >        return res.status(500).json({ message: "Failed to retrieve users" });</span>
+      }
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (!results || results.length === 0) {
+<span class="cstat-no" title="statement not covered" >        return res.status(404).json({ message: "No users found" });</span>
+      }
+      res.status(200).json(results);
+    });
+  } catch (err) {
+<span class="cstat-no" title="statement not covered" >    console.error("Unexpected error:", err);</span>
+<span class="cstat-no" title="statement not covered" >    res.status(500).json({ message: "Server error" });</span>
+  }
 };
 &nbsp;
 exports.loginUser = async (req, res) =&gt; {
@@ -469,7 +481,7 @@ exports.toggleUserTypeById = <span class="fstat-no" title="function not covered"
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2024-12-06T17:46:02.584Z
+                at 2024-12-06T18:54:01.365Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

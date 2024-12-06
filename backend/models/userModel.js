@@ -10,6 +10,16 @@ const User = {
     );
   },
 
+  getAll: (callback) => {
+    const query = `SELECT id, ime, priimek, email, tip_uporabnika_id FROM uporabnik`;
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error("Database error:", err);
+        return callback(err, null);
+      }
+      callback(null, results);
+    });
+  },
   findByEmail: (email, callback) => {
     const query = `SELECT * FROM uporabnik WHERE email = ?`;
     db.query(query, [email], (err, results) => {
@@ -17,15 +27,8 @@ const User = {
         console.error("Error during email check:", err);
         return callback(err, null);
       }
-      if (results && results.length > 0) {
-        return callback(null, results); // vrni vse rezultate, ki so našli
-      }
-      callback(null, []); // če ni rezultatov, vrni prazen seznam
+      callback(null, results);
     });
-  },
-  getAll: (callback) => {
-    const query = `SELECT id, ime, priimek, email, tip_uporabnika_id FROM uporabnik`;
-    db.query(query, callback);
   },
 
   findById: (id, callback) => {

@@ -5,39 +5,43 @@ const jwt = require("jsonwebtoken");
 exports.registerUser = async (req, res) => {
   const { user } = req.body;
   try {
-    User.findByEmail(user.email, (err, results) => {
-      if (results.length > 0) {
-        return res.status(400).json({ message: "User already exists" });
-      }
-      bcrypt.hash(user.geslo, 10, (err, hashedPassword) => {
-        if (err) throw err;
+    const existingUser = await User.findOne({ email: user.email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 
-        const newUser = {
-          ime: user.ime,
-          priimek: user.priimek,
-          email: user.email,
-          geslo: hashedPassword,
-          tip_uporabnika_id: 1,
-        };
-
-        User.create(newUser, (err, result) => {
-          if (err) throw err;
-          res.status(201).json({ message: "User registered successfully" });
-        });
-      });
+    const hashedPassword = await bcrypt.hash(user.geslo, 10);
+    const newUser = await User.create({
+      ime: user.ime,
+      priimek: user.priimek,
+      email: user.email,
+      geslo: hashedPassword,
     });
+
+    res
+      .status(201)
+      .json({ message: "User registered successfully", user: newUser });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
 };
 
-exports.getAllUsers = (req, res) => {
-  User.getAll((err, results) => {
-    if (err) {
-      return res.status(500).json({ message: "Failed to retrieve users" });
-    }
-    res.status(200).json(results);
-  });
+exports.getAllUsers = async (req, res) => {
+  try {
+    User.getAll((err, results) => {
+      if (err) {
+        console.error("Error fetching users:", err);
+        return res.status(500).json({ message: "Failed to retrieve users" });
+      }
+      if (!results || results.length === 0) {
+        return res.status(404).json({ message: "No users found" });
+      }
+      res.status(200).json(results);
+    });
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 exports.loginUser = async (req, res) => {

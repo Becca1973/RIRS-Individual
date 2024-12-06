@@ -1,12 +1,12 @@
+const request = require("supertest");
+const app = require("../server");
+
 jest.mock("../middleware/verifyToken", () => {
   return (req, res, next) => {
     req.userId = 1;
     next();
   };
 });
-
-const request = require("supertest");
-const app = require("../server");
 
 describe("Zahtevki za dopuste", () => {
   it("naj ustvari nov dopust", async () => {
@@ -18,9 +18,10 @@ describe("Zahtevki za dopuste", () => {
           {
             ime: "Janez",
             priimek: "Novak",
-            tip: "Letni dopust",
-            datum_zacetka: "2024-12-02",
-            datum_konca: "2024-12-10",
+            tip: 1,
+            razlog: "Počitnice",
+            startDate: "2024-12-02",
+            endDate: "2024-12-10",
           },
         ],
       });
