@@ -30,7 +30,7 @@ const Dashboard = () => {
     const fetchUserRequests = async () => {
       try {
         const data = await getUserRequests();
-        console.log("Fetched user requests:", data);
+        console.log("Fetched user requests:", data); // Preverite podatke tukaj
         setRequests(data);
       } catch (error) {
         console.error("Error fetching user requests:", error);
@@ -67,13 +67,10 @@ const Dashboard = () => {
       console.error("No leave ID provided!");
       return;
     }
-
     if (window.confirm("Are you sure you want to delete this leave?")) {
       try {
         console.log("Deleting leave with ID:", leaveId);
-
         await deleteLeave(leaveId);
-
         setRequests((prevRequests) =>
           prevRequests.map((request) => ({
             ...request,
@@ -86,7 +83,6 @@ const Dashboard = () => {
       }
     }
   };
-
   return (
     <Container
       sx={{

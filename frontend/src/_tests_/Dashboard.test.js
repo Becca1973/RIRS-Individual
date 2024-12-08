@@ -1,27 +1,36 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import Dashboard from "../components/Dashboard";
-import { getUserRequests } from "../api/requestApi";
 import userEvent from "@testing-library/user-event";
+import { deleteLeave } from "../api/requestApi";
+
 import "@testing-library/jest-dom";
 
 jest.mock("../api/requestApi", () => ({
-  getUserRequests: jest.fn(),
+  deleteLeave: jest.fn().mockResolvedValue({ success: true }), // Mockira funkcijo, ki vrača uspeh
+  getUserRequests: jest.fn().mockResolvedValue([
+    {
+      dopusti: [
+        {
+          id: "1", // Primer ID-ja dopusta
+          tip_dopusta: "Vacation Leave",
+          zacetek: "2023-12-01",
+          konec: "2023-12-05",
+        },
+      ],
+    },
+  ]),
 }));
 
 describe("Dashboard", () => {
-  beforeEach(async () => {
-    await getUserRequests.mockResolvedValue([
-      {
-        dopusti: [
-          {
-            tip_dopusta: "Vacation Leave",
-            zacetek: "2023-12-01",
-            konec: "2023-12-05",
-          },
-        ],
-      },
-    ]);
+  let confirmSpy;
+
+  beforeEach(() => {
+    confirmSpy = jest.spyOn(window, "confirm").mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    confirmSpy.mockRestore();
   });
 
   test("renders loading spinner initially and displays data after fetch", async () => {
@@ -73,6 +82,40 @@ describe("Dashboard", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Vacation Leave")).toBeInTheDocument();
+    });
+  });
+
+  test("displays confirmation dialog when delete button is clicked", async () => {
+    render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Vacation Leave")).toBeInTheDocument();
+    });
+
+    const deleteButton = screen.getByRole("button", { name: /delete/i });
+    userEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(confirmSpy).toHaveBeenCalled();
+    });
+  });
+
+  test("removes leave from the list after successful deletion", async () => {
+    render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Vacation Leave")).toBeInTheDocument();
+    });
+
+    const deleteButton = screen.getByRole("button", { name: /delete/i });
+    userEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(deleteLeave).toHaveBeenCalledWith("1");
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Vacation Leave")).not.toBeInTheDocument();
     });
   });
 });

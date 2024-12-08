@@ -1,33 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1733511263043" clover="3.2.0">
-  <project timestamp="1733511263044" name="All files">
-    <metrics statements="83" coveredstatements="70" conditionals="25" coveredconditionals="15" methods="33" coveredmethods="27" elements="141" coveredelements="112" complexity="0" loc="83" ncloc="83" packages="1" files="3" classes="3"/>
+<coverage generated="1733636991886" clover="3.2.0">
+  <project timestamp="1733636991886" name="All files">
+    <metrics statements="98" coveredstatements="81" conditionals="29" coveredconditionals="17" methods="38" coveredmethods="32" elements="165" coveredelements="130" complexity="0" loc="98" ncloc="98" packages="1" files="3" classes="3"/>
     <file name="Dashboard.js" path="C:\Users\rebek\OneDrive\Dokumenti\1LETNIK_MAG\RIRS\RIRS-individual\RIRS\frontend\src\components\Dashboard.js">
-      <metrics statements="24" coveredstatements="21" conditionals="6" coveredconditionals="4" methods="12" coveredmethods="9"/>
-      <line num="23" count="1" type="stmt"/>
-      <line num="24" count="6" type="stmt"/>
-      <line num="25" count="6" type="stmt"/>
-      <line num="26" count="6" type="stmt"/>
-      <line num="28" count="6" type="stmt"/>
-      <line num="29" count="3" type="stmt"/>
-      <line num="30" count="3" type="stmt"/>
-      <line num="31" count="3" type="stmt"/>
-      <line num="32" count="3" type="stmt"/>
-      <line num="34" count="0" type="stmt"/>
-      <line num="36" count="3" type="stmt"/>
-      <line num="39" count="3" type="stmt"/>
-      <line num="42" count="6" type="stmt"/>
-      <line num="45" count="3" type="stmt"/>
-      <line num="50" count="6" type="cond" truecount="1" falsecount="1"/>
-      <line num="52" count="0" type="stmt"/>
-      <line num="56" count="6" type="cond" truecount="2" falsecount="0"/>
-      <line num="57" count="3" type="stmt"/>
-      <line num="63" count="3" type="stmt"/>
-      <line num="96" count="0" type="stmt"/>
-      <line num="103" count="3" type="stmt"/>
-      <line num="128" count="3" type="stmt"/>
-      <line num="130" count="3" type="cond" truecount="1" falsecount="1"/>
-      <line num="133" count="3" type="stmt"/>
+      <metrics statements="39" coveredstatements="32" conditionals="10" coveredconditionals="6" methods="17" coveredmethods="14"/>
+      <line num="24" count="1" type="stmt"/>
+      <line num="25" count="12" type="stmt"/>
+      <line num="26" count="12" type="stmt"/>
+      <line num="27" count="12" type="stmt"/>
+      <line num="29" count="12" type="stmt"/>
+      <line num="30" count="5" type="stmt"/>
+      <line num="31" count="5" type="stmt"/>
+      <line num="32" count="5" type="stmt"/>
+      <line num="33" count="5" type="stmt"/>
+      <line num="34" count="5" type="stmt"/>
+      <line num="36" count="0" type="stmt"/>
+      <line num="38" count="5" type="stmt"/>
+      <line num="41" count="5" type="stmt"/>
+      <line num="44" count="12" type="stmt"/>
+      <line num="47" count="7" type="stmt"/>
+      <line num="52" count="12" type="cond" truecount="1" falsecount="1"/>
+      <line num="54" count="0" type="stmt"/>
+      <line num="58" count="12" type="cond" truecount="2" falsecount="0"/>
+      <line num="59" count="5" type="stmt"/>
+      <line num="65" count="7" type="stmt"/>
+      <line num="66" count="2" type="cond" truecount="1" falsecount="1"/>
+      <line num="67" count="0" type="stmt"/>
+      <line num="68" count="0" type="stmt"/>
+      <line num="70" count="2" type="cond" truecount="1" falsecount="1"/>
+      <line num="71" count="2" type="stmt"/>
+      <line num="72" count="2" type="stmt"/>
+      <line num="73" count="2" type="stmt"/>
+      <line num="74" count="2" type="stmt"/>
+      <line num="75" count="2" type="stmt"/>
+      <line num="77" count="2" type="stmt"/>
+      <line num="81" count="0" type="stmt"/>
+      <line num="82" count="0" type="stmt"/>
+      <line num="86" count="7" type="stmt"/>
+      <line num="119" count="0" type="stmt"/>
+      <line num="126" count="5" type="stmt"/>
+      <line num="154" count="7" type="stmt"/>
+      <line num="156" count="5" type="cond" truecount="1" falsecount="1"/>
+      <line num="159" count="5" type="stmt"/>
+      <line num="177" count="2" type="stmt"/>
     </file>
     <file name="LeavesTable.js" path="C:\Users\rebek\OneDrive\Dokumenti\1LETNIK_MAG\RIRS\RIRS-individual\RIRS\frontend\src\components\LeavesTable.js">
       <metrics statements="19" coveredstatements="12" conditionals="9" coveredconditionals="2" methods="6" coveredmethods="4"/>
