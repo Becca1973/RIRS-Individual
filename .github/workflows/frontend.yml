@@ -98,25 +98,14 @@ jobs:
   deploy-to-github-pages:
     needs: build-frontend
     runs-on: ubuntu-latest
-
     permissions:
-      contents: read
       pages: write
-      id-token: write
-
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: frontend-build
-
       - name: Deploy to GitHub Pages
-        uses: actions/configure-pages@v3
-
-      - name: Upload files to GitHub Pages
-        uses: actions/deploy-pages@v2
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
