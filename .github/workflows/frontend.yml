@@ -93,3 +93,28 @@ jobs:
         with:
           name: frontend-coverage
           path: frontend/coverage/
+
+  # Job za nalaganje na GitHub Pages
+  deploy-to-github-pages:
+    needs: build-frontend
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to GitHub Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload files to GitHub Pages
+        run: |
+          mkdir -p ./output
+          cp -r ./docs/* ./output
+        uses: actions/deploy-pages@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
