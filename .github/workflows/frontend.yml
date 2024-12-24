@@ -1,5 +1,7 @@
+# Ime pipeline-a za frontend
 name: Frontend CI
 
+# Dogodki, ki sprožijo workflow (push in pull request na glavno vejo)
 on:
   push:
     branches:
@@ -11,7 +13,51 @@ on:
       - production
 
 jobs:
+  # Job za gradnjo frontenda
   build-frontend:
+    runs-on: ubuntu-latest # Okolje, v katerem bo job tekel
+
+    steps:
+      - name: Checkout code # Kloniranje repozitorija
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js # Namestitev Node.js okolja
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Cache node_modules # Caching odvisnosti
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules # Pot do mape node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }} # Ključ za cache
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+        # ⚠️ KAKO DELUJE CACHING:
+        # - Ob prvi izvedbi (cache miss) mapa node_modules še ne obstaja -> npm install ustvari mapo node_modules.
+        # - Po zaključku job-a se vsebina node_modules shrani v cache.
+        # - Ob naslednji izvedbi (cache hit) se node_modules obnovi iz cache-a, kar skrajša čas nameščanja odvisnosti.
+
+      - name: Install dependencies # Namestitev odvisnosti
+        run: |
+          cd frontend
+          npm ci
+        # Če node_modules že obstaja, npm samo preveri skladnost z datotekama package.json in package-lock.json.
+
+      - name: Build application # Gradnja aplikacije
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Upload build artifacts # Naložitev gradbenih artefaktov
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build/
+
+  # Job za testiranje frontenda
+  test-frontend:
+    needs: build-frontend # Testiranje se izvede po uspešni gradnji
     runs-on: ubuntu-latest
 
     steps:
@@ -23,7 +69,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Cache node_modules
+      - name: Cache node_modules # Caching odvisnosti
         uses: actions/cache@v3
         with:
           path: frontend/node_modules
@@ -34,54 +80,32 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend
-          npm ci
+          npm install
+        # ⚠️ KAKO PREPOZNATI, DA JE CACHE USPEŠEN?
+        # - Če je cache hit, npm install ne namešča novih odvisnosti, ampak preveri obstoječe.
+        # - Če je cache miss, npm install ponovno ustvari mapo node_modules.
 
-      - name: Build application
+      - name: Run tests with coverage
         run: |
           cd frontend
-          npm run build
+          npm run test:ci
 
-  test-frontend:
-    needs: build-frontend
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Run tests
-        run: |
-          cd frontend
-          npm test
-
-  sonarcloud-analysis:
-    needs: test-frontend
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 20
-
-      - name: Run SonarCloud analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          npx sonar-scanner \
-            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }} \
-            -Dsonar.organization=${{ secrets.ORGANIZATION_KEY }} \
-            -Dsonar.sources=./frontend \
-            -Dsonar.host.url=https://sonarcloud.io
+          name: frontend-coverage
+          path: frontend/coverage/
 
   dockerize-and-push-dev:
     needs: test-frontend
     runs-on: ubuntu-latest
+    environment: Development
+    if: github.ref == 'refs/heads/main'
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -91,7 +115,103 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:dev ./frontend
+          docker tag ${{ secrets.DOCKER_USERNAME }}/frontend:dev ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
 
-      - name: Push Docker image
+      - name: Push Docker image to Docker Hub
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:dev
+          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
+
+  # SonarCloud analiza
+  sonarcloud-analysis:
+    needs: test-frontend
+    runs-on: ubuntu-latest
+    environment:
+      name: Development
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      - name: Collect coverage (React-specific)
+        run: |
+          cd frontend
+          npm run test:ci -- --coverage
+        env:
+          CI: true
+      - name: Upload coverage report
+        run: |
+          cp frontend/coverage/lcov.info .
+      - name: Run SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          npx sonar-scanner \
+            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }} \
+            -Dsonar.organization=${{ secrets.ORGANIZATION_KEY }} \
+            -Dsonar.sources=./frontend \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+
+  # Gradnja Docker slike in nalaganje na Docker Hub - Production
+  dockerize-and-push-prod:
+    needs: [test-frontend, sonarcloud-analysis]
+    runs-on: ubuntu-latest
+
+    if: github.ref == 'refs/heads/production'
+
+    environment:
+      name: Production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check SonarCloud Quality Gate
+        run: |
+          curl -u ${{ secrets.SONAR_TOKEN }}: \
+            "https://sonarcloud.io/api/project_badges/measure?project=${{ secrets.PROJECT_KEY }}&metric=alert_status" | grep -q "OK" || exit 1
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:prod ./frontend
+          docker tag ${{ secrets.DOCKER_USERNAME }}/frontend:prod ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:prod
+          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
+
+  deploy-pages:
+    needs: test-frontend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
