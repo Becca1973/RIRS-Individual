@@ -1,6 +1,6 @@
 node_modules
-build
+.env
+*.log
+*.pem
+*.key
 .git
-.gitignore
-Dockerfile
-.dockerignore
