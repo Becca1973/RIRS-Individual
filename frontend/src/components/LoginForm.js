@@ -9,6 +9,7 @@ import {
   Alert,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import zxcvbn from "zxcvbn"; // Uporabimo knjižnico za preverjanje moči gesla
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -29,6 +30,7 @@ const LoginForm = () => {
       [name]: value,
     });
   };
+
   const validate = () => {
     const errors = {};
 
@@ -39,11 +41,14 @@ const LoginForm = () => {
       errors.email = "Email is invalid";
     }
 
-    // Validacija gesla
+    // Validacija gesla z uporabo knjižnice zxcvbn
     if (!formData.password) {
       errors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
+    } else {
+      const passwordStrength = zxcvbn(formData.password);
+      if (passwordStrength.score < 2) {
+        errors.password = "Password is too weak. Try a stronger one.";
+      }
     }
 
     return errors;
