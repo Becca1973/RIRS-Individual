@@ -1,7 +1,5 @@
-# Ime pipeline-a za frontend
 name: Frontend CI
 
-# Dogodki, ki sprožijo workflow (push in pull request na glavno vejo)
 on:
   push:
     branches:
@@ -13,9 +11,8 @@ on:
       - production
 
 jobs:
-  # Job za gradnjo frontenda
   build-frontend:
-    runs-on: ubuntu-latest # Okolje, v katerem bo job tekel
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code # Kloniranje repozitorija
@@ -29,35 +26,28 @@ jobs:
       - name: Cache node_modules # Caching odvisnosti
         uses: actions/cache@v3
         with:
-          path: frontend/node_modules # Pot do mape node_modules
+          path: frontend/node_modules
           key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }} # Ključ za cache
           restore-keys: |
             ${{ runner.os }}-frontend-
-        # ⚠️ KAKO DELUJE CACHING:
-        # - Ob prvi izvedbi (cache miss) mapa node_modules še ne obstaja -> npm install ustvari mapo node_modules.
-        # - Po zaključku job-a se vsebina node_modules shrani v cache.
-        # - Ob naslednji izvedbi (cache hit) se node_modules obnovi iz cache-a, kar skrajša čas nameščanja odvisnosti.
-
       - name: Install dependencies # Namestitev odvisnosti
         run: |
           cd frontend
           npm ci
-        # Če node_modules že obstaja, npm samo preveri skladnost z datotekama package.json in package-lock.json.
 
       - name: Build application # Gradnja aplikacije
         run: |
           cd frontend
           npm run build
 
-      - name: Upload build artifacts # Naložitev gradbenih artefaktov
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/build/
 
-  # Job za testiranje frontenda
   test-frontend:
-    needs: build-frontend # Testiranje se izvede po uspešni gradnji
+    needs: build-frontend
     runs-on: ubuntu-latest
 
     steps:
@@ -81,9 +71,6 @@ jobs:
         run: |
           cd frontend
           npm install
-        # ⚠️ KAKO PREPOZNATI, DA JE CACHE USPEŠEN?
-        # - Če je cache hit, npm install ne namešča novih odvisnosti, ampak preveri obstoječe.
-        # - Če je cache miss, npm install ponovno ustvari mapo node_modules.
 
       - name: Run tests with coverage
         run: |
@@ -95,7 +82,7 @@ jobs:
         with:
           name: frontend-coverage
           path: frontend/coverage/
-
+  #DOCKER
   dockerize-and-push-dev:
     needs: test-frontend
     runs-on: ubuntu-latest
@@ -106,18 +93,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Login to Docker Hub
+      - name: Login to Docker Hub # Prijava v Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build Docker image # Gradnja Docker slike
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:dev ./frontend
           docker tag ${{ secrets.DOCKER_USERNAME }}/frontend:dev ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
 
-      - name: Push Docker image to Docker Hub
+      - name: Push Docker image to Docker Hub # Potisk Docker slike na Docker Hub
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:dev
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
@@ -130,32 +117,32 @@ jobs:
       name: Development
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
     steps:
-      - name: Checkout code
+      - name: Checkout code # Kloniranje repozitorija
         uses: actions/checkout@v3
-      - name: Setup Node.js
+      - name: Setup Node.js # Nastavitev Node.js okolja
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      - name: Setup Java 17
+      - name: Setup Java 17 # Nastavitev Java 17 okolja
         uses: actions/setup-java@v3
         with:
           java-version: "17"
           distribution: "temurin"
-      - name: Install dependencies
+      - name: Install dependencies # Namestitev odvisnosti
         run: |
           cd frontend
           npm ci
-      - name: Collect coverage (React-specific)
+      - name: Collect coverage (React-specific) # Zbiranje podatkov o pokritosti kode (React specifično)
         run: |
           cd frontend
           npm run test:ci -- --coverage
         env:
           CI: true
-      - name: Upload coverage report
+      - name: Upload coverage report # Naložitev poročila o pokritosti kode
         run: |
           cp frontend/coverage/lcov.info .
-      - name: Run SonarCloud analysis
+      - name: Run SonarCloud analysis # Zagon SonarCloud analize
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
@@ -180,23 +167,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Check SonarCloud Quality Gate
+      - name: Check SonarCloud Quality Gate # Preverjanje SonarCloud kakovostne meje
         run: |
           curl -u ${{ secrets.SONAR_TOKEN }}: \
             "https://sonarcloud.io/api/project_badges/measure?project=${{ secrets.PROJECT_KEY }}&metric=alert_status" | grep -q "OK" || exit 1
 
-      - name: Login to Docker Hub
+      - name: Login to Docker Hub # Prijava v Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build Docker image # Gradnja Docker slike
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:prod ./frontend
           docker tag ${{ secrets.DOCKER_USERNAME }}/frontend:prod ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
 
-      - name: Push Docker image to Docker Hub
+      - name: Push Docker image to Docker Hub # Potisk Docker slike na Docker Hub
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:prod
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
@@ -210,7 +197,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages # Implementacija na GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
