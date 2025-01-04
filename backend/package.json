@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --detectOpenHandles",
-    "test:ci": "jest --coverage --watchAll=false --detectOpenHandles"
+    "test": "jest",
+    "test:ci": "jest --coverage"
   },
   "keywords": [],
   "author": "",
