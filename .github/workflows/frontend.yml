@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code 
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Setup Node.js
@@ -23,14 +23,14 @@ jobs:
         with:
           node-version: 20
 
-      - name: Cache node_modules 
+      - name: Cache node_modules
         uses: actions/cache@v3
         with:
           path: frontend/node_modules
           key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }} # Ključ za cache
           restore-keys: |
             ${{ runner.os }}-frontend-
-      - name: Install dependencies 
+      - name: Install dependencies
         run: |
           cd frontend
           npm ci
@@ -151,7 +151,7 @@ jobs:
             -Dsonar.organization=${{ secrets.ORGANIZATION_KEY }} \
             -Dsonar.sources=./frontend \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov-report/Icov.info
 
   # Gradnja Docker slike in nalaganje na Docker Hub - Production
   dockerize-and-push-prod:
