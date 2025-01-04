@@ -9,7 +9,7 @@ import {
   Alert,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import zxcvbn from "zxcvbn"; // Uporabimo knjižnico za preverjanje moči gesla
+import zxcvbn from "zxcvbn";
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -42,7 +42,7 @@ const LoginForm = () => {
     }
 
     // Validacija gesla z uporabo knjižnice zxcvbn
-    if (!formData.password) {
+    if (!formData.password || formData.password.trim() === "") {
       errors.password = "Password is required";
     } else {
       const passwordStrength = zxcvbn(formData.password);
@@ -63,13 +63,13 @@ const LoginForm = () => {
       try {
         const user = {
           email: formData.email,
-          geslo: formData.password,
+          password: formData.password, // Preverjeno geslo se posreduje varno
         };
 
         const response = await login(user);
 
         if (response) {
-          localStorage.setItem("token", response.token); // Store the token
+          localStorage.setItem("token", response.token); // Shranjevanje tokena
           localStorage.setItem("userId", response.userId);
           setSuccessMessage("Login successful!");
           setOpenSnackbar(true);
