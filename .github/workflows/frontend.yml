@@ -152,7 +152,6 @@ jobs:
             -Dsonar.sources=./frontend \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.exclusions=frontend/coverage/**
 
   # Gradnja Docker slike in nalaganje na Docker Hub - Production
   dockerize-and-push-prod:

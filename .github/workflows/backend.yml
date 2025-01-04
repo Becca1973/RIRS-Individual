@@ -200,7 +200,6 @@ jobs:
             -Dsonar.sources=./backend \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.exclusions=backend/coverage/**
 
   dockerize-and-push-prod:
     needs: [test-backend, sonarcloud-analysis]
