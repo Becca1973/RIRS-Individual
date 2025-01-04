@@ -23,12 +23,16 @@ const LoginForm = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+  // Ločena funkcija za validacijo gesla
+  const validatePassword = (password) => {
+    if (!password || password.trim() === "") {
+      return "Password is required";
+    }
+    const passwordStrength = zxcvbn(password);
+    if (passwordStrength.score < 2) {
+      return "Password is too weak. Try a stronger one.";
+    }
+    return null;
   };
 
   const validate = () => {
@@ -41,14 +45,10 @@ const LoginForm = () => {
       errors.email = "Email is invalid";
     }
 
-    // Validacija gesla z uporabo knjižnice zxcvbn
-    if (!formData.password || formData.password.trim() === "") {
-      errors.password = "Password is required";
-    } else {
-      const passwordStrength = zxcvbn(formData.password);
-      if (passwordStrength.score < 2) {
-        errors.password = "Password is too weak. Try a stronger one.";
-      }
+    // Uporaba ločene validacije za geslo
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      errors.password = passwordError;
     }
 
     return errors;
@@ -63,7 +63,7 @@ const LoginForm = () => {
       try {
         const user = {
           email: formData.email,
-          password: formData.password, // Preverjeno geslo se posreduje varno
+          password: formData.password, // Geslo posredujemo varno
         };
 
         const response = await login(user);
@@ -120,7 +120,7 @@ const LoginForm = () => {
           fullWidth
           margin="normal"
           value={formData.email}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           error={!!errors.email}
           helperText={errors.email}
         />
@@ -132,7 +132,9 @@ const LoginForm = () => {
           fullWidth
           margin="normal"
           value={formData.password}
-          onChange={handleChange}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
           error={!!errors.password}
           helperText={errors.password}
         />
