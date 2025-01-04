@@ -199,7 +199,8 @@ jobs:
             -Dsonar.organization=${{ secrets.ORGANIZATION_KEY }} \
             -Dsonar.sources=./backend \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov-report/lcov-report.json \
+            -Dsonar.javascript.lcov.reportPaths=coverage/Icov.info
+
   dockerize-and-push-prod:
     needs: [test-backend, sonarcloud-analysis]
     runs-on: ubuntu-latest
