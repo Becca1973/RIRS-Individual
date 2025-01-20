@@ -32,18 +32,42 @@ const RegisterForm = () => {
     });
   };
 
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
   const validate = () => {
-    let errors = {};
-    if (!formData.name.trim()) errors.name = "Name is required";
-    if (!formData.email.trim()) errors.email = "Email is required";
-    if (!formData.lastName.trim()) errors.lastName = "Last name is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
+    const errors = {};
+  
+    // Validacija imena
+    if (!formData.name.trim()) {
+      errors.name = "Name is required";
+    }
+  
+    // Validacija priimka
+    if (!formData.lastName.trim()) {
+      errors.lastName = "Last name is required";
+    }
+  
+    // Validacija emaila
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
       errors.email = "Email is invalid";
-    if (!formData.password) errors.password = "Password is required";
-    else if (formData.password.length < 6)
+    }
+  
+    // Validacija gesla
+    if (!formData.password) {
+      errors.password = "Password is required";
+    } else if (formData.password.length < 6) {
       errors.password = "Password must be at least 6 characters";
-    if (formData.password !== formData.confirmPassword)
-      errors.confirmPassword = "Passwords do not match";
+    }
+  
+    // Preverjanje ujemanja gesel
+    if (formData.password && formData.confirmPassword) {
+      if (formData.password !== formData.confirmPassword) {
+        errors.confirmPassword = "Passwords do not match";
+      }
+    }
+  
     return errors;
   };
 
