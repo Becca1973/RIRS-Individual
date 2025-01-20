@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: .env
 
-    env: # Define global environment variables for the job
+    env: 
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
