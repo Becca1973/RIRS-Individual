@@ -1,21 +1,21 @@
-# Ime pipeline-a za backend
 name: Backend CI
 
 on:
   push:
     branches:
       - main
+      - production
   pull_request:
     branches:
       - main
+      - production
 
 jobs:
-  # Job za gradnjo backenda
   build-backend:
     runs-on: ubuntu-latest
     environment: .env
 
-    env: 
+    env:
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -23,10 +23,10 @@ jobs:
       PORT: ${{ secrets.PORT }}
 
     steps:
-      - name: Checkout code # Kloniranje repozitorija
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js # Namestitev Node.js okolja
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -42,54 +42,136 @@ jobs:
       - name: Verify .env file contents
         run: cat backend/.env
 
-      - name: Cache node_modules # Caching odvisnosti
+      - name: Cache node_modules
         uses: actions/cache@v3
         with:
-          path: backend/node_modules # Pot do mape node_modules
-          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }} # Ključ za cache
+          path: backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-backend-
-        # ⚠️ Caching:
-        # - Če cache obstaja (cache hit), se node_modules obnovi, preden se zažene npm install.
-        # - Če cache ne obstaja (cache miss), npm install ponovno ustvari mapo node_modules.
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Upload backend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: |
+            backend/
+            backend/node_modules/
+
+  test-backend:
+    needs: build-backend
+    runs-on: ubuntu-latest
+
+    env:
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      PORT: ${{ secrets.PORT }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Create .env file from GitHub Secrets
+        run: |
+          echo "DB_HOST=${{ secrets.DB_HOST }}" > backend/.env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> backend/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
+          echo "PORT=${{ secrets.PORT }}" >> backend/.env
+
+      - name: Verify .env file contents
+        run: cat backend/.env
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Run tests with coverage
+        run: |
+          cd backend
+          npm run test:ci
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage/
+
+  dockerize-and-push-dev:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    environment: Development
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub # Prijava na Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build Docker image # Gradnja Docker slike za Development
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:dev ./backend
+          docker tag ${{ secrets.DOCKER_USERNAME }}/backend:dev ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+
+      - name: Push Docker image to Docker Hub # Naložitev slike na Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/backend:dev
+          docker push ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+
+  sonarcloud-analysis:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    environment:
+      name: Development
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup Java 17 
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
 
       - name: Install dependencies # Namestitev odvisnosti
         run: |
           cd backend
           npm ci
 
-      - name: Upload backend artifacts # Naložitev artefaktov za backend
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-build # Ime artefakta
-          path: |
-            backend/  
-            backend/node_modules/
-          # Pot do celotne kode
-          # Nameščene odvisnosti
-
-  # Job za testiranje backenda
-  test-backend:
-    needs: build-backend # Testiranje se izvede po uspešni gradnji
-    runs-on: ubuntu-latest
-
-    env: # Define global environment variables for the job
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_NAME: ${{ secrets.DB_NAME }}
-      PORT: ${{ secrets.PORT }}
-
-    steps:
-      - name: Checkout code # Kloniranje repozitorija
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js # Namestitev Node.js okolja
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Create .env file from GitHub Secrets
+      - name: Create .env file from GitHub Secrets # Ustvarjanje datoteke .env
         run: |
           echo "DB_HOST=${{ secrets.DB_HOST }}" > backend/.env
           echo "DB_USER=${{ secrets.DB_USER }}" >> backend/.env
@@ -97,32 +179,58 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
           echo "PORT=${{ secrets.PORT }}" >> backend/.env
 
-      - name: Verify .env file contents
-        run: cat backend/.env
-
-      - name: Cache node_modules # Caching odvisnosti
-        uses: actions/cache@v3
-        with:
-          path: backend/node_modules # Pot do mape node_modules
-          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }} # Ključ za cache
-          restore-keys: |
-            ${{ runner.os }}-backend-
-
-      - name: Install dependencies # Namestitev odvisnosti
-        run: |
-          cd backend
-          npm install
-        # ⚠️ Cache hit:
-        # - Če je cache hit, npm install preveri obstoječe odvisnosti in ne namešča ničesar dodatnega.
-        # - Če je cache miss, npm install ponovno ustvari mapo node_modules.
-
-      - name: Run tests with coverage # Izvajanje testov s pokritostjo
+      - name: Run tests with coverage
         run: |
           cd backend
           npm run test:ci
+        env:
+          CI: true
 
       - name: Upload coverage report # Naložitev poročila o pokritosti kode
-        uses: actions/upload-artifact@v4
+        run: |
+          cp backend/coverage/lcov.info .
+
+      - name: Run SonarCloud analysis # Analiza kode z SonarCloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          npx sonar-scanner \
+            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }} \
+            -Dsonar.organization=${{ secrets.ORGANIZATION_KEY }} \
+            -Dsonar.sources=./backend \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.javascript.lcov.reportPaths=backend/coverage/lcov.info
+
+  dockerize-and-push-prod:
+    needs: [test-backend, sonarcloud-analysis]
+    runs-on: ubuntu-latest
+
+    if: github.ref == 'refs/heads/production'
+
+    environment:
+      name: Production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check SonarCloud Quality Gate # Preverjanje kakovostne pregrade SonarCloud
+        run: |
+          curl -u ${{ secrets.SONAR_TOKEN }}: \
+            "https://sonarcloud.io/api/project_badges/measure?project=${{ secrets.PROJECT_KEY }}&metric=alert_status" | grep -q "OK" || exit 1
+
+      - name: Login to Docker Hub # Prijava na Docker Hub
+        uses: docker/login-action@v2
         with:
-          name: backend-coverage # Ime artefakta
-          path: backend/coverage/ # Pot do poročila o pokritosti kode
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build Docker image # Gradnja Docker slike za Production
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:prod ./backend
+          docker tag ${{ secrets.DOCKER_USERNAME }}/backend:prod ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+
+      - name: Push Docker image to Docker Hub # Naložitev slike na Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/backend:prod
+          docker push ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}

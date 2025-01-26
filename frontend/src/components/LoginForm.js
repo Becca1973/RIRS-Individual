@@ -9,34 +9,48 @@ import {
   Alert,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import zxcvbn from "zxcvbn";
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+  // Ločena funkcija za validacijo gesla
+  const validatePassword = (password) => {
+    if (!password || password.trim() === "") {
+      return "Password is required";
+    }
+    const passwordStrength = zxcvbn(password);
+    if (passwordStrength.score < 2) {
+      return "Password is too weak. Try a stronger one.";
+    }
+    return null;
   };
 
   const validate = () => {
-    let errors = {};
-    if (!formData.email.trim()) errors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
+    const errors = {};
+
+    // Validacija emaila
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
       errors.email = "Email is invalid";
-    if (!formData.password) errors.password = "Password is required";
-    else if (formData.password.length < 6)
-      errors.password = "Password must be at least 6 characters";
+    }
+
+    // Uporaba ločene validacije za geslo
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      errors.password = passwordError;
+    }
+
     return errors;
   };
 
@@ -49,13 +63,13 @@ const LoginForm = () => {
       try {
         const user = {
           email: formData.email,
-          geslo: formData.password,
+          password: formData.password, // Geslo posredujemo varno
         };
 
         const response = await login(user);
 
         if (response) {
-          localStorage.setItem("token", response.token); // Store the token
+          localStorage.setItem("token", response.token); // Shranjevanje tokena
           localStorage.setItem("userId", response.userId);
           setSuccessMessage("Login successful!");
           setOpenSnackbar(true);
@@ -106,7 +120,7 @@ const LoginForm = () => {
           fullWidth
           margin="normal"
           value={formData.email}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           error={!!errors.email}
           helperText={errors.email}
         />
@@ -118,7 +132,9 @@ const LoginForm = () => {
           fullWidth
           margin="normal"
           value={formData.password}
-          onChange={handleChange}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
           error={!!errors.password}
           helperText={errors.password}
         />
