@@ -154,7 +154,7 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
 
   # Gradnja Docker slike in nalaganje na Docker Hub - Production
-dockerize-and-push-prod:
+  dockerize-and-push-prod:
     needs: test-frontend
     runs-on: ubuntu-latest
 
