@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1733636991886" clover="3.2.0">
-  <project timestamp="1733636991886" name="All files">
+<coverage generated="1737858842979" clover="3.2.0">
+  <project timestamp="1737858842979" name="All files">
     <metrics statements="98" coveredstatements="81" conditionals="29" coveredconditionals="17" methods="38" coveredmethods="32" elements="165" coveredelements="130" complexity="0" loc="98" ncloc="98" packages="1" files="3" classes="3"/>
     <file name="Dashboard.js" path="C:\Users\rebek\OneDrive\Dokumenti\1LETNIK_MAG\RIRS\RIRS-individual\RIRS\frontend\src\components\Dashboard.js">
       <metrics statements="39" coveredstatements="32" conditionals="10" coveredconditionals="6" methods="17" coveredmethods="14"/>

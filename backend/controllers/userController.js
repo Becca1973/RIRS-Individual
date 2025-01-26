@@ -22,6 +22,7 @@ exports.registerUser = async (req, res) => {
       .status(201)
       .json({ message: "User registered successfully", user: newUser });
   } catch (error) {
+    console.error("Error during user registration:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -89,6 +90,10 @@ exports.loginUser = async (req, res) => {
 };
 
 exports.getLoggedInUser = async (req, res) => {
+  if (!req.userId) {
+    return res.status(403).json({ message: "User not authenticated" });
+  }
+
   try {
     const result = await User.findById(req.userId);
     if (!result) {
@@ -106,29 +111,18 @@ exports.toggleUserTypeById = async (req, res) => {
   const userId = req.params.id;
 
   try {
-    User.findById(userId, (err, user) => {
-      if (err) {
-        console.error("Error retrieving user:", err);
-        return res.status(500).json({ message: "Failed to retrieve user" });
-      }
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-      const newUserType = user.tip_uporabnika_id === 1 ? 2 : 1;
-      User.update(userId, newUserType, (updateErr) => {
-        if (updateErr) {
-          console.error("Error updating user type:", updateErr);
-          return res
-            .status(500)
-            .json({ message: "Failed to update user type" });
-        }
+    const newUserType = user.tip_uporabnika_id === 1 ? 2 : 1;
+    user.tip_uporabnika_id = newUserType;
+    await user.save();
 
-        res.status(200).json({
-          message: "User type updated successfully",
-          user: { ...user, tip_uporabnika_id: newUserType },
-        });
-      });
+    res.status(200).json({
+      message: "User type updated successfully",
+      user: { ...user, tip_uporabnika_id: newUserType },
     });
   } catch (error) {
     console.error("Error in toggleUserTypeById:", error);
