@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1737858830453" clover="3.2.0">
-  <project timestamp="1737858830453" name="All files">
-    <metrics statements="256" coveredstatements="154" conditionals="82" coveredconditionals="35" methods="51" coveredmethods="30" elements="389" coveredelements="219" complexity="0" loc="256" ncloc="256" packages="5" files="9" classes="9"/>
+<coverage generated="1737885479402" clover="3.2.0">
+  <project timestamp="1737885479403" name="All files">
+    <metrics statements="256" coveredstatements="154" conditionals="80" coveredconditionals="34" methods="51" coveredmethods="30" elements="387" coveredelements="218" complexity="0" loc="256" ncloc="256" packages="5" files="9" classes="9"/>
     <package name="backend">
-      <metrics statements="24" coveredstatements="20" conditionals="6" coveredconditionals="2" methods="3" coveredmethods="1"/>
+      <metrics statements="24" coveredstatements="20" conditionals="4" coveredconditionals="1" methods="3" coveredmethods="1"/>
       <file name="db.js" path="C:\Users\rebek\OneDrive\Dokumenti\1LETNIK_MAG\RIRS\RIRS-individual\RIRS\backend\db.js">
-        <metrics statements="8" coveredstatements="7" conditionals="2" coveredconditionals="1" methods="2" coveredmethods="1"/>
+        <metrics statements="8" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="1"/>
         <line num="1" count="2" type="stmt"/>
         <line num="2" count="2" type="stmt"/>
         <line num="4" count="2" type="stmt"/>
         <line num="6" count="2" type="stmt"/>
-        <line num="14" count="2" type="stmt"/>
-        <line num="16" count="2" type="stmt"/>
-        <line num="19" count="0" type="stmt"/>
-        <line num="22" count="2" type="stmt"/>
+        <line num="18" count="2" type="stmt"/>
+        <line num="20" count="2" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
       </file>
       <file name="server.js" path="C:\Users\rebek\OneDrive\Dokumenti\1LETNIK_MAG\RIRS\RIRS-individual\RIRS\backend\server.js">
         <metrics statements="16" coveredstatements="13" conditionals="4" coveredconditionals="1" methods="1" coveredmethods="0"/>
