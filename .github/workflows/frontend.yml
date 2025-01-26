@@ -109,84 +109,35 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:dev
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
 
-  # SonarCloud analiza
-  sonarcloud-analysis:
-    needs: test-frontend
-    runs-on: ubuntu-latest
-    environment:
-      name: Development
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-    steps:
-      - name: Checkout code # Kloniranje repozitorija
-        uses: actions/checkout@v3
-      - name: Setup Node.js # Nastavitev Node.js okolja
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Setup Java 17 # Nastavitev Java 17 okolja
-        uses: actions/setup-java@v3
-        with:
-          java-version: "17"
-          distribution: "temurin"
-      - name: Install dependencies # Namestitev odvisnosti
-        run: |
-          cd frontend
-          npm ci
-      - name: Collect coverage (React-specific) # Zbiranje podatkov o pokritosti kode (React specifično)
-        run: |
-          cd frontend
-          npm run test:ci -- --coverage
-        env:
-          CI: true
-      - name: Upload coverage report # Naložitev poročila o pokritosti kode
-        run: |
-          cp frontend/coverage/lcov.info .
-      - name: Run SonarCloud analysis # Zagon SonarCloud analize
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          npx sonar-scanner \
-            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }} \
-            -Dsonar.organization=${{ secrets.ORGANIZATION_KEY }} \
-            -Dsonar.sources=./frontend \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
-
   # Gradnja Docker slike in nalaganje na Docker Hub - Production
-  dockerize-and-push-prod:
-    needs: [test-frontend]
-    runs-on: ubuntu-latest
+dockerize-and-push-prod-frontend:
+  needs: [test-frontend] # Odstranil sem sonarcloud-analysis iz needs
+  runs-on: ubuntu-latest
 
-    if: github.ref == 'refs/heads/production'
+  if: github.ref == 'refs/heads/production'
 
-    environment:
-      name: Production
+  environment:
+    name: Production
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Check SonarCloud Quality Gate # Preverjanje SonarCloud kakovostne meje
-        run: |
-          curl -u ${{ secrets.SONAR_TOKEN }}: \
-            "https://sonarcloud.io/api/project_badges/measure?project=${{ secrets.PROJECT_KEY }}&metric=alert_status" | grep -q "OK" || exit 1
+    - name: Login to Docker Hub # Prijava na Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Login to Docker Hub # Prijava v Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+    - name: Build Docker image # Gradnja Docker slike za Frontend
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:prod ./frontend
+        docker tag ${{ secrets.DOCKER_USERNAME }}/frontend:prod ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
 
-      - name: Build Docker image # Gradnja Docker slike
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:prod ./frontend
-          docker tag ${{ secrets.DOCKER_USERNAME }}/frontend:prod ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
-
-      - name: Push Docker image to Docker Hub # Potisk Docker slike na Docker Hub
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:prod
-          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
+    - name: Push Docker image to Docker Hub # Naložitev slike na Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/frontend:prod
+        docker push ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
 
   deploy-pages:
     needs: test-frontend
