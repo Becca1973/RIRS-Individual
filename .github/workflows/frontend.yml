@@ -109,9 +109,53 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:dev
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
 
+  # SonarCloud analiza
+  sonarcloud-analysis:
+    needs: test-frontend
+    runs-on: ubuntu-latest
+    environment:
+      name: Development
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+    steps:
+      - name: Checkout code # Kloniranje repozitorija
+        uses: actions/checkout@v3
+      - name: Setup Node.js # Nastavitev Node.js okolja
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup Java 17 # Nastavitev Java 17 okolja
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+      - name: Install dependencies # Namestitev odvisnosti
+        run: |
+          cd frontend
+          npm ci
+      - name: Collect coverage (React-specific) # Zbiranje podatkov o pokritosti kode (React specifično)
+        run: |
+          cd frontend
+          npm run test:ci -- --coverage
+        env:
+          CI: true
+      - name: Upload coverage report # Naložitev poročila o pokritosti kode
+        run: |
+          cp frontend/coverage/lcov.info .
+      - name: Run SonarCloud analysis # Zagon SonarCloud analize
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          npx sonar-scanner \
+            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }} \
+            -Dsonar.organization=${{ secrets.ORGANIZATION_KEY }} \
+            -Dsonar.sources=./frontend \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+
   # Gradnja Docker slike in nalaganje na Docker Hub - Production
 dockerize-and-push-prod-frontend:
-  needs: [test-frontend] # Odstranil sem sonarcloud-analysis iz needs
+  needs: [test-frontend]
   runs-on: ubuntu-latest
 
   if: github.ref == 'refs/heads/production'

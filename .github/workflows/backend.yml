@@ -143,8 +143,66 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/backend:dev
           docker push ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+
+  sonarcloud-analysis:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    environment:
+      name: Development
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Install dependencies # Namestitev odvisnosti
+        run: |
+          cd backend
+          npm ci
+
+      - name: Create .env file from GitHub Secrets # Ustvarjanje datoteke .env
+        run: |
+          echo "DB_HOST=${{ secrets.DB_HOST }}" > backend/.env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> backend/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
+          echo "PORT=${{ secrets.PORT }}" >> backend/.env
+
+      - name: Run tests with coverage
+        run: |
+          cd backend
+          npm run test:ci
+        env:
+          CI: true
+
+      - name: Upload coverage report # Naložitev poročila o pokritosti kode
+        run: |
+          cp backend/coverage/lcov.info .
+
+      - name: Run SonarCloud analysis # Analiza kode z SonarCloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          npx sonar-scanner \
+            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }} \
+            -Dsonar.organization=${{ secrets.ORGANIZATION_KEY }} \
+            -Dsonar.sources=./backend \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.javascript.lcov.reportPaths=backend/coverage/lcov.info
+
 dockerize-and-push-prod:
-  needs: [test-backend] # Odstranil sem sonarcloud-analysis iz needs
+  needs: [test-backend] 
   runs-on: ubuntu-latest
 
   if: github.ref == 'refs/heads/production'
