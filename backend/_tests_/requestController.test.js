@@ -14,6 +14,13 @@ beforeAll(() => {
 afterAll(() => {
   db.end();
 });
+beforeEach((done) => {
+  // Izbriši vse zapise v tabeli dopust, da preprečiš konflikte z ID-ji
+  db.query("DELETE FROM dopust", (err) => {
+    if (err) return done(err);
+    done();
+  });
+});
 
 describe("Zahtevki za dopuste", () => {
   it("naj ustvari nov dopust", async () => {
@@ -29,6 +36,7 @@ describe("Zahtevki za dopuste", () => {
             razlog: "Počitnice",
             startDate: "2024-12-02",
             endDate: "2024-12-10",
+            zahteva_id: 1,
           },
         ],
       });
@@ -75,34 +83,20 @@ describe("Zahtevki za dopuste", () => {
     expect(res.body.message).toBe("Request status updated successfully");
   });
 
-  //Nova funkcionalnost (brisanje dopustov)
-  it("should delete a leave successfully", (done) => {
-    db.query(
-      "INSERT INTO dopust (id, razlog, zacetek, konec, tip_dopusta_id, zahteva_id) VALUES (?, ?, ?, ?, ?, ?)",
-      [1, "Test reason", "2024-12-01", "2024-12-05", 1, 2],
-      (err) => {
-        if (err) return done(err);
-
-        // Pošlje DELETE zahtevek za brisanje dopusta z ID-jem 1
-        request(app)
-          .delete("/api/requests/leave/1")
-          .expect(200)
-          .expect((res) => {
-            expect(res.body.message).toBe("Leave deleted successfully");
-          })
-          .end((err) => {
-            if (err) return done(err);
-
-            // Preveri, da je bil zapis izbrisan
-            db.query("SELECT * FROM dopust WHERE id = ?", [1], (err, rows) => {
-              if (err) return done(err);
-
-              expect(rows.length).toBe(0);
-              done();
-            });
-          });
-      }
+  it("should delete a leave successfully", async () => {
+    // Ustvari nov dopust v bazi
+    await db.query(
+      "INSERT INTO dopust (id, razlog, zacetek, konec, tip_dopusta_id, zahteva_id) VALUES ($1, $2, $3, $4, $5, $6)",
+      [2, "Test reason", "2024-12-01", "2024-12-05", 1, 2]
     );
+
+    const res = await request(app).delete("/api/requests/leave/2");
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Leave deleted successfully");
+
+    // Preveri, da je bil zapis izbrisan
+    const { rows } = await db.query("SELECT * FROM dopust WHERE id = $1", [2]);
+    expect(rows.length).toBe(0); // Ni več zapisov
   });
 
   it("should return 404 for non-existent leave", async () => {
