@@ -38,7 +38,6 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
           echo "PORT=${{ secrets.PORT }}" >> backend/.env
-
       - name: Verify .env file contents
         run: cat backend/.env
 
@@ -49,12 +48,10 @@ jobs:
           key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-backend-
-
       - name: Install dependencies
         run: |
           cd backend
           npm ci
-
       - name: Upload backend artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -62,7 +59,6 @@ jobs:
           path: |
             backend/
             backend/node_modules/
-
   test-backend:
     needs: build-backend
     runs-on: ubuntu-latest
@@ -90,7 +86,6 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
           echo "PORT=${{ secrets.PORT }}" >> backend/.env
-
       - name: Verify .env file contents
         run: cat backend/.env
 
@@ -101,17 +96,14 @@ jobs:
           key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-backend-
-
       - name: Install dependencies
         run: |
           cd backend
           npm install
-
       - name: Run tests with coverage
         run: |
           cd backend
           npm run test:ci
-
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
@@ -138,7 +130,6 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:dev ./backend
           docker tag ${{ secrets.DOCKER_USERNAME }}/backend:dev ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
-
       - name: Push Docker image to Docker Hub # Naložitev slike na Docker Hub
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/backend:dev
@@ -170,7 +161,6 @@ jobs:
         run: |
           cd backend
           npm ci
-
       - name: Create .env file from GitHub Secrets # Ustvarjanje datoteke .env
         run: |
           echo "DB_HOST=${{ secrets.DB_HOST }}" > backend/.env
@@ -178,7 +168,6 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
           echo "PORT=${{ secrets.PORT }}" >> backend/.env
-
       - name: Run tests with coverage
         run: |
           cd backend
@@ -189,7 +178,6 @@ jobs:
       - name: Upload coverage report # Naložitev poročila o pokritosti kode
         run: |
           cp backend/coverage/lcov.info .
-
       - name: Run SonarCloud analysis # Analiza kode z SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -201,31 +189,29 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.javascript.lcov.reportPaths=backend/coverage/lcov.info
 
-dockerize-and-push-prod:
-  needs: [test-backend] 
-  runs-on: ubuntu-latest
+  dockerize-and-push-prod:
+    needs: test-backend
+    runs-on: ubuntu-latest
 
-  if: github.ref == 'refs/heads/production'
+    if: github.ref == 'refs/heads/production'
 
-  environment:
-    name: Production
+    environment:
+      name: Production
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Login to Docker Hub # Prijava na Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
-    - name: Login to Docker Hub # Prijava na Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_TOKEN }}
-
-    - name: Build Docker image # Gradnja Docker slike za Production
-      run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:prod ./backend
-        docker tag ${{ secrets.DOCKER_USERNAME }}/backend:prod ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
-
-    - name: Push Docker image to Docker Hub # Naložitev slike na Docker Hub
-      run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/backend:prod
-        docker push ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+      - name: Build Docker image # Gradnja Docker slike za Production
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:prod ./backend
+          docker tag ${{ secrets.DOCKER_USERNAME }}/backend:prod ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+      - name: Push Docker image to Docker Hub # Naložitev slike na Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/backend:prod
+          docker push ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
