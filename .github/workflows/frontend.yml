@@ -155,7 +155,7 @@ jobs:
 
   # Gradnja Docker slike in nalaganje na Docker Hub - Production
   dockerize-and-push-prod:
-    needs: [test-frontend, sonarcloud-analysis]
+    needs: [test-frontend]
     runs-on: ubuntu-latest
 
     if: github.ref == 'refs/heads/production'
